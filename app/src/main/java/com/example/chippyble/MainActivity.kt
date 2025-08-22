@@ -23,8 +23,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var messageAdapter: MessageAdapter
 
     companion object {
-        const val CHIPPY_SERVICE_UUID = "0000ff00-0000-1000-8000-00805f9b34fb"
-        const val CHIPPY_CHARACTERISTIC_UUID = "0000ff01-0000-1000-8000-00805f9b34fb"
+        const val CHIPPY_SERVICE_UUID = "0000FF00-0000-1000-8000-00805F9B34FB"
+        const val CHIPPY_CHARACTERISTIC_UUID = "0000FF01-0000-1000-8000-00805F9B34FB"
         const val REQUEST_ENABLE_BT = 1
     }
 
