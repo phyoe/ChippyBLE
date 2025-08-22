@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Chippy BLE</string>
+    <string name="scan_devices">Scan Devices</string>
+    <string name="stop_scan">Stop Scan</string>
+    <string name="make_discoverable">Make Discoverable</string>
+    <string name="send">Send</string>
+    <string name="type_message">Type your thank you message</string>
+    <string name="available_devices">Available Devices</string>
+    <string name="messages">Messages</string>
+    <string name="status_disconnected">Status: Disconnected</string>
+</resources>
