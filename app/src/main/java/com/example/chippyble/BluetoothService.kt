@@ -129,13 +129,24 @@ class BluetoothService : Service() {
 
     fun sendMessage(message: String) {
         connectedDevice?.let { device ->
-            val characteristic = gattServer?.getService(MainActivity.CHIPPY_SERVICE_UUID)
-                ?.getCharacteristic(MainActivity.CHIPPY_CHARACTERISTIC_UUID)
+            // Convert String UUIDs to UUID objects
+            val serviceUuid = UUID.fromString(MainActivity.CHIPPY_SERVICE_UUID)
+            val characteristicUuid = UUID.fromString(MainActivity.CHIPPY_CHARACTERISTIC_UUID)
 
-            characteristic?.value = message.toByteArray()
-            gattServer?.notifyCharacteristicChanged(device, characteristic, false)
+            val service = gattServer?.getService(serviceUuid) // Use the UUID object
+            val characteristic = service?.getCharacteristic(characteristicUuid) // Use the UUID object
+
+            if (characteristic != null) {
+                characteristic.value = message.toByteArray()
+                // Ensure the characteristic is not null before calling notifyCharacteristicChanged
+                gattServer?.notifyCharacteristicChanged(device, characteristic, false)
+            } else {
+                Log.e("BluetoothService", "Characteristic not found")
+            }
         }
     }
+
+
 
     fun connectToDevice(device: BluetoothDevice) {
         device.connectGatt(this, false, gattClientCallback)

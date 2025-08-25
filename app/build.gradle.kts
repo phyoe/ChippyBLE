@@ -12,7 +12,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.chippyble"
-        minSdk = 26
+        minSdk = 21
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -20,6 +20,9 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
+        }
+        ndk {
+            abiFilters.addAll(listOf("armeabi-v7a", "x86")) // Corrected line
         }
     }
 
