@@ -5,23 +5,32 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class BluetoothViewModel : ViewModel() {
-    private val _devices = MutableLiveData<List<BluetoothDevice>>()
+    // デバイスリスト
+    private val _devices = MutableLiveData<List<BluetoothDevice>>(emptyList())
     val devices: LiveData<List<BluetoothDevice>> = _devices
 
-    private val _messages = MutableLiveData<List<String>>()
+    // メッセージリスト
+    private val _messages = MutableLiveData<List<String>>(emptyList())
     val messages: LiveData<List<String>> = _messages
 
+    // 接続状態 - 初期値を明確に設定
     private val _connectionStatus = MutableLiveData<String>("Disconnected")
     val connectionStatus: LiveData<String> = _connectionStatus
 
+    // スキャン状態
     private val _scanningStatus = MutableLiveData<Boolean>(false)
     val scanningStatus: LiveData<Boolean> = _scanningStatus
 
-    private val _toastMessage = MutableLiveData<String>()
+    // トーストメッセージ
+    private val _toastMessage = MutableLiveData<String>("")
     val toastMessage: LiveData<String> = _toastMessage
+
+    // 接続中のデバイス
+    private var connectedDevice: BluetoothDevice? = null
 
     fun startScan() {
         _scanningStatus.value = true
@@ -30,16 +39,20 @@ class BluetoothViewModel : ViewModel() {
 
     fun stopScan() {
         _scanningStatus.value = false
-        _toastMessage.value = "Scan stopped"
+        showToast("Scan stopped")
     }
 
     fun connectToDevice(device: BluetoothDevice) {
         viewModelScope.launch {
-            _connectionStatus.value = "Connecting to ${device.name}..."
-            _toastMessage.value = "Connecting to ${device.name}"
-            // Simulate connection process
-            kotlinx.coroutines.delay(1000)
-            _connectionStatus.value = "Connected to ${device.name}"
+            updateConnectionStatus("Connecting...")
+            showToast("Connecting to ${device.name ?: "Unknown Device"}")
+
+            // 接続処理のシミュレーション
+            delay(1500)
+
+            connectedDevice = device
+            updateConnectionStatus("Connected to ${device.name ?: "Unknown Device"}")
+            showToast("Connected successfully")
         }
     }
 
@@ -47,13 +60,20 @@ class BluetoothViewModel : ViewModel() {
         viewModelScope.launch {
             val currentMessages = _messages.value ?: emptyList()
             _messages.value = currentMessages + "You: $message"
-            _toastMessage.value = "Message sent"
+            showToast("Message sent")
+
+            // 受信メッセージのシミュレーション（実際のBLE通信では不要）
+            if (connectedDevice != null) {
+                delay(500)
+                addReceivedMessage("Thank you! 🙏")
+            }
         }
     }
 
     fun disconnect() {
-        _connectionStatus.value = "Disconnected"
-        _toastMessage.value = "Disconnected"
+        connectedDevice = null
+        updateConnectionStatus("Disconnected")
+        showToast("Disconnected")
     }
 
     fun addReceivedMessage(message: String) {
@@ -61,5 +81,25 @@ class BluetoothViewModel : ViewModel() {
             val currentMessages = _messages.value ?: emptyList()
             _messages.value = currentMessages + "Received: $message"
         }
+    }
+
+    fun updateConnectionStatus(status: String) {
+        _connectionStatus.value = status
+    }
+
+    fun showToast(message: String) {
+        _toastMessage.value = message
+    }
+
+    fun clearToastMessage() {
+        _toastMessage.value = ""
+    }
+
+    fun isConnected(): Boolean {
+        return connectedDevice != null
+    }
+
+    fun getConnectedDevice(): BluetoothDevice? {
+        return connectedDevice
     }
 }

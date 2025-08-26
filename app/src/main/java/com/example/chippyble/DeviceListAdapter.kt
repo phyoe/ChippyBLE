@@ -33,7 +33,7 @@ class DeviceListAdapter(
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(device: BluetoothDevice) {
-            binding.deviceNameText.text = device.name ?: "Unknown Device"
+            binding.deviceNameText.text = device.name ?: "不明なデバイス"
             binding.deviceAddressText.text = device.address
 
             binding.root.setOnClickListener {

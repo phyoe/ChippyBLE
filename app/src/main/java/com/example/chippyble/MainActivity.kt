@@ -1,5 +1,6 @@
 package com.example.chippyble
 
+import android.util.Log
 import android.Manifest
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
@@ -43,9 +44,15 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // 初期状態を設定
+        binding.connectionStatusText.text = "Status: Disconnected"
+
         checkPermissions()
         setupUI()
         setupObservers()
+
+        // 初期メッセージを表示
+        viewModel.showToast("Welcome to Chippy BLE!")
     }
 
     private fun checkPermissions() {
@@ -56,7 +63,13 @@ class MainActivity : AppCompatActivity() {
             Manifest.permission.BLUETOOTH_CONNECT
         )
 
+        //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            //requiredPermissions.add(Manifest.permission.ACCESS_FINE_LOCATION)
+        //}
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            requiredPermissions.add(Manifest.permission.BLUETOOTH_SCAN)
+            requiredPermissions.add(Manifest.permission.BLUETOOTH_CONNECT)
+        } else {
             requiredPermissions.add(Manifest.permission.ACCESS_FINE_LOCATION)
         }
 
@@ -126,25 +139,42 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupObservers() {
+        // 接続状態の観測
+        viewModel.connectionStatus.observe(this) { status ->
+            Log.d("DEBUG", "Connection status observer called: $status")// 一時的に直接設定して確認
+            binding.connectionStatusText.text = "Status: Testing"
+            //binding.connectionStatusText.text = "Status: $status"
+
+            // ViewModelの現在の値をログ出力
+            Log.d("DEBUG", "Current status: ${viewModel.connectionStatus.value}")
+        }
+
+        // デバイスリストの観測
         viewModel.devices.observe(this) { devices ->
             deviceAdapter.submitList(devices)
+            Log.d("ChippyBLE", "Devices updated: ${devices.size}")
         }
 
+        // メッセージの観測
         viewModel.messages.observe(this) { messages ->
             messageAdapter.submitList(messages)
+            Log.d("ChippyBLE", "Messages updated: ${messages.size}")
         }
 
-        viewModel.connectionStatus.observe(this) { status ->
-            binding.connectionStatusText.text = status
-        }
-
+        // スキャン状態の観測
         viewModel.scanningStatus.observe(this) { scanning ->
             binding.scanButton.isEnabled = !scanning
             binding.stopScanButton.isEnabled = scanning
+            Log.d("ChippyBLE", "Scanning: $scanning")
         }
 
+        // トーストメッセージの観測
         viewModel.toastMessage.observe(this) { message ->
-            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+            if (message.isNotEmpty()) {
+                Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+                // メッセージを表示したらクリア
+                viewModel.clearToastMessage()
+            }
         }
     }
 

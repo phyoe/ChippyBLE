@@ -13,7 +13,7 @@ android {
     defaultConfig {
         applicationId = "com.example.chippyble"
         minSdk = 21
-        targetSdk = 34
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
@@ -22,7 +22,7 @@ android {
             useSupportLibrary = true
         }
         ndk {
-            abiFilters.addAll(listOf("armeabi-v7a", "x86")) // Corrected line
+            abiFilters.addAll(listOf("armeabi-v7a", "x86_64")) // Corrected line
         }
     }
 
