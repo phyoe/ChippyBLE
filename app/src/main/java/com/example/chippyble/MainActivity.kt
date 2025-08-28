@@ -140,7 +140,11 @@ class MainActivity : AppCompatActivity() {
         // デバッグボタン
         binding.debugButton.setOnClickListener {
             debugBluetoothInfo()
-            viewModel.loadPairedDevices(bluetoothAdapter)
+
+            // まずペアリング済みデバイスを表示
+            // viewModel.loadPairedDevices(bluetoothAdapter)
+            // 使用可能なデバイス
+            viewModel.refreshVisibleDevicesList(bluetoothAdapter)
         }
     }
 
@@ -184,7 +188,9 @@ class MainActivity : AppCompatActivity() {
         ContextCompat.startForegroundService(this, serviceIntent)
 
         // サービス開始後にペアリング済みデバイスを読み込み
-        viewModel.loadPairedDevices(bluetoothAdapter)
+        // viewModel.loadPairedDevices(bluetoothAdapter)
+        // 使用可能なデバイス
+        viewModel.refreshVisibleDevicesList(bluetoothAdapter)
     }
 
     private fun makeDiscoverable() {
@@ -220,7 +226,10 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         // 画面再表示時にデバイスリストを更新
         if (::bluetoothAdapter.isInitialized && bluetoothAdapter.isEnabled) {
-            viewModel.loadPairedDevices(bluetoothAdapter)
+            // ペアリング済みデバイスを表示
+            // viewModel.loadPairedDevices(bluetoothAdapter)
+            // 使用可能なデバイス
+            viewModel.refreshVisibleDevicesList(bluetoothAdapter)
         }
     }
 

@@ -5,7 +5,7 @@
     <string name="make_discoverable">検出可能にする</string>
     <string name="send">送信</string>
     <string name="type_message">ありがとうメッセージを入力</string>
-    <string name="available_devices">利用可能なデバイス</string>
+    <string name="available_devices">使用可能なデバイス</string>
     <string name="messages">メッセージ一覧</string>
     <string name="status_disconnected">ステータス: 切断</string>
 </resources>
