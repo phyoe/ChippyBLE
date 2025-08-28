@@ -156,7 +156,12 @@ class MainActivity : AppCompatActivity() {
         }
 
         viewModel.connectionStatus.observe(this) { status ->
-            binding.connectionStatusText.text = "Status: $status"
+            //binding.connectionStatusText.text = "Status: $status"
+            if (status.equals("Disconnected")) { // Added a closing parenthesis here
+                binding.connectionStatusText.text = "ステータス: 切断"
+            } else {
+                binding.connectionStatusText.text = "ステータス： $status"
+            }
             Log.d("DEBUG", "Connection status: $status")
         }
 

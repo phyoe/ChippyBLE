@@ -42,7 +42,8 @@ class BluetoothViewModel : ViewModel() {
         }
 
         _devices.value = deviceList
-        _toastMessage.value = "Found ${deviceList.size} paired devices"
+        //_toastMessage.value = "Found ${deviceList.size} paired devices"
+        _toastMessage.value = "${deviceList.size}台のペアリング済みデバイスが見つかりました"
     }
 
     // フィルター機能
@@ -92,7 +93,8 @@ class BluetoothViewModel : ViewModel() {
     // スキャンメソッドも修正
     fun startScan(bluetoothAdapter: BluetoothAdapter?) {
         _scanningStatus.value = true
-        _toastMessage.value = "Scanning for devices..."
+        //_toastMessage.value = "Scanning for devices..."
+        _toastMessage.value = "デバイスをスキャン中..."
 
         // まずペアリング済みデバイスを表示
         loadPairedDevices(bluetoothAdapter)
@@ -101,28 +103,34 @@ class BluetoothViewModel : ViewModel() {
             // BLEスキャンのロジック（後で実装）
             delay(5000) // 5秒間スキャン
             _scanningStatus.value = false
-            _toastMessage.value = "Scan completed"
+            //_toastMessage.value = "Scan completed"
+            _toastMessage.value = "スキャン完了"
         }
     }
 
     fun stopScan() {
         _scanningStatus.value = false
-        showToast("Scan stopped")
+        //showToast("Scan stopped")
+        showToast("スキャン停止")
     }
 
     // And connectToDevice would be:
     @SuppressLint("MissingPermission")
     fun connectToDevice(device: DeviceModel) { // 'device' HERE IS DeviceModel
         viewModelScope.launch {
-            updateConnectionStatus("Connecting...")
-            showToast("Connecting to ${device.name ?: "Unknown Device"}")
+            //updateConnectionStatus("Connecting...")
+            updateConnectionStatus("接続中...")
+            //showToast("Connecting to ${device.name ?: "Unknown Device"}")
+            showToast("${device.name ?: "不明なデバイス"}に接続しました")
 
             // 接続処理のシミュレーション
             delay(1500)
 
             connectedDevice = device.bluetoothDevice // This is correct IF 'device' is DeviceModel AND DeviceModel has 'bluetoothDevice'
-            updateConnectionStatus("Connected to ${device.name ?: "Unknown Device"}")
-            showToast("Connected successfully")
+            //updateConnectionStatus("Connected to ${device.name ?: "Unknown Device"}")
+            updateConnectionStatus("${device.name ?: "不明なデバイス"}に接続しました")
+            //showToast("Connected successfully")
+            showToast("接続に成功しました")
         }
     }
 
@@ -135,13 +143,16 @@ class BluetoothViewModel : ViewModel() {
     fun sendMessage(message: String) {
         viewModelScope.launch {
             val currentMessages = _messages.value ?: emptyList()
-            _messages.value = currentMessages + "You: $message"
-            showToast("Message sent")
+            //_messages.value = currentMessages + "You: $message"
+            _messages.value = currentMessages + "送信: $message"
+            //showToast("Message sent")
+            showToast("メッセージを送信しました")
 
             // 受信メッセージのシミュレーション（実際のBLE通信では不要）
             if (connectedDevice != null) {
                 delay(500)
-                addReceivedMessage("Thank you! 🙏")
+                //addReceivedMessage("Thank you! 🙏")
+                addReceivedMessage("ありがとうございました！🙏")
             }
         }
     }
@@ -149,13 +160,15 @@ class BluetoothViewModel : ViewModel() {
     fun disconnect() {
         connectedDevice = null
         updateConnectionStatus("Disconnected")
-        showToast("Disconnected")
+        //showToast("Disconnected")
+        showToast("切断されています")
     }
 
     fun addReceivedMessage(message: String) {
         viewModelScope.launch {
             val currentMessages = _messages.value ?: emptyList()
-            _messages.value = currentMessages + "Received: $message"
+            //_messages.value = currentMessages + "Received: $message"
+            _messages.value = currentMessages + "受信: $message"
         }
     }
 
