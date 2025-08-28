@@ -1,9 +1,11 @@
 package com.example.chippyble
 
+import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
@@ -14,12 +16,15 @@ import android.bluetooth.BluetoothGattServerCallback
 import android.bluetooth.BluetoothGattService
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
+import android.bluetooth.le.ScanCallback
+import android.bluetooth.le.ScanFilter
+import android.bluetooth.le.ScanResult
+import android.bluetooth.le.ScanSettings
 import android.content.Intent
 import android.os.Binder
-import android.os.Build
 import android.os.IBinder
 import android.util.Log
-import androidx.annotation.RequiresApi
+import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
 import java.util.UUID
 
@@ -59,6 +64,7 @@ class BluetoothService : Service() {
     }
 
     private val gattClientCallback = object : BluetoothGattCallback() {
+        @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 gatt.discoverServices()
@@ -90,6 +96,8 @@ class BluetoothService : Service() {
         return binder
     }
 
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+    @SuppressLint("ForegroundServiceType")
     override fun onCreate() {
         super.onCreate()
         initializeBluetooth()
@@ -97,6 +105,7 @@ class BluetoothService : Service() {
         startForeground(1, createNotification())
     }
 
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     private fun initializeBluetooth() {
         val bluetoothManager = getSystemService(BluetoothManager::class.java)
         bluetoothAdapter = bluetoothManager?.adapter ?: BluetoothAdapter.getDefaultAdapter()
@@ -129,6 +138,7 @@ class BluetoothService : Service() {
         return service
     }
 
+    @androidx.annotation.RequiresPermission(android.Manifest.permission.BLUETOOTH_CONNECT)
     fun sendMessage(message: String) {
         connectedDevice?.let { device ->
             // Convert String UUIDs to UUID objects
@@ -148,8 +158,7 @@ class BluetoothService : Service() {
         }
     }
 
-
-
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     fun connectToDevice(device: BluetoothDevice) {
         device.connectGatt(this, false, gattClientCallback)
     }
@@ -174,6 +183,44 @@ class BluetoothService : Service() {
             .build()
     }
 
+    @SuppressLint("MissingPermission")
+    fun startDebugScan() {
+        try {
+            val bluetoothManager = getSystemService(BluetoothManager::class.java)
+            val bluetoothAdapter = bluetoothManager?.adapter ?: BluetoothAdapter.getDefaultAdapter()
+
+            val scanner = bluetoothAdapter.bluetoothLeScanner
+            val scanCallback = object : ScanCallback() {
+                override fun onScanResult(callbackType: Int, result: ScanResult?) {
+                    result?.device?.let { device ->
+                        Log.d("BluetoothService", "Found: ${device.name} - ${device.address}")
+                    }
+                }
+
+                override fun onBatchScanResults(results: MutableList<ScanResult>?) {
+                    results?.forEach { result ->
+                        Log.d("BluetoothService", "Batch: ${result.device.name}")
+                    }
+                }
+
+                override fun onScanFailed(errorCode: Int) {
+                    Log.e("BluetoothService", "Scan failed: $errorCode")
+                }
+            }
+
+            val filters = mutableListOf<ScanFilter>()
+            val settings = ScanSettings.Builder()
+                .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                .build()
+
+            scanner.startScan(filters, settings, scanCallback)
+
+        } catch (e: Exception) {
+            Log.e("BluetoothService", "Scan error: ${e.message}")
+        }
+    }
+
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     override fun onDestroy() {
         super.onDestroy()
         gattServer?.close()

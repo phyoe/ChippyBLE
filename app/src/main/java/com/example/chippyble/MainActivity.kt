@@ -1,16 +1,18 @@
 package com.example.chippyble
 
-import android.util.Log
 import android.Manifest
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.annotation.RequiresPermission
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -20,8 +22,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val viewModel: BluetoothViewModel by viewModels()
     private lateinit var bluetoothAdapter: BluetoothAdapter
-    private lateinit var deviceAdapter: DeviceListAdapter
-    private lateinit var messageAdapter: MessageAdapter
+    private lateinit var deviceAdapter: DeviceListAdapter  // ここで宣言
+    private lateinit var messageAdapter: MessageAdapter    // ここで宣言
 
     companion object {
         const val CHIPPY_SERVICE_UUID = "0000FF00-0000-1000-8000-00805F9B34FB"
@@ -29,6 +31,7 @@ class MainActivity : AppCompatActivity() {
         const val REQUEST_ENABLE_BT = 1
     }
 
+    @SuppressLint("MissingPermission")
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -44,15 +47,21 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // 初期状態を設定
-        binding.connectionStatusText.text = "Status: Disconnected"
+        // アダプターを初期化
+        initializeAdapters()
 
         checkPermissions()
         setupUI()
         setupObservers()
+    }
 
-        // 初期メッセージを表示
-        viewModel.showToast("Welcome to Chippy BLE!")
+    // アダプター初期化メソッドを追加
+    private fun initializeAdapters() {
+        deviceAdapter = DeviceListAdapter { device ->
+            viewModel.connectToDevice(device)
+        }
+
+        messageAdapter = MessageAdapter()
     }
 
     private fun checkPermissions() {
@@ -63,13 +72,7 @@ class MainActivity : AppCompatActivity() {
             Manifest.permission.BLUETOOTH_CONNECT
         )
 
-        //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            //requiredPermissions.add(Manifest.permission.ACCESS_FINE_LOCATION)
-        //}
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            requiredPermissions.add(Manifest.permission.BLUETOOTH_SCAN)
-            requiredPermissions.add(Manifest.permission.BLUETOOTH_CONNECT)
-        } else {
             requiredPermissions.add(Manifest.permission.ACCESS_FINE_LOCATION)
         }
 
@@ -82,6 +85,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     private fun initializeBluetooth() {
         val bluetoothManager = getSystemService(BluetoothManager::class.java)
         bluetoothAdapter = bluetoothManager?.adapter ?: BluetoothAdapter.getDefaultAdapter()
@@ -100,25 +104,21 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    @SuppressLint("MissingPermission")
     private fun setupUI() {
-        deviceAdapter = DeviceListAdapter { device ->
-            viewModel.connectToDevice(device)
-        }
-
-        messageAdapter = MessageAdapter()
-
+        // RecyclerViewの設定
         binding.devicesRecyclerView.apply {
             layoutManager = LinearLayoutManager(this@MainActivity)
-            adapter = deviceAdapter
+            adapter = deviceAdapter  // 初期化済みのadapterを使用
         }
 
         binding.messagesRecyclerView.apply {
             layoutManager = LinearLayoutManager(this@MainActivity)
-            adapter = messageAdapter
+            adapter = messageAdapter  // 初期化済みのadapterを使用
         }
 
         binding.scanButton.setOnClickListener {
-            viewModel.startScan()
+            viewModel.startScan(bluetoothAdapter)
         }
 
         binding.stopScanButton.setOnClickListener {
@@ -136,43 +136,39 @@ class MainActivity : AppCompatActivity() {
         binding.makeDiscoverableButton.setOnClickListener {
             makeDiscoverable()
         }
+
+        // デバッグボタン
+        binding.debugButton.setOnClickListener {
+            debugBluetoothInfo()
+            viewModel.loadPairedDevices(bluetoothAdapter)
+        }
     }
 
     private fun setupObservers() {
-        // 接続状態の観測
-        viewModel.connectionStatus.observe(this) { status ->
-            Log.d("DEBUG", "Connection status observer called: $status")// 一時的に直接設定して確認
-            binding.connectionStatusText.text = "Status: Testing"
-            //binding.connectionStatusText.text = "Status: $status"
-
-            // ViewModelの現在の値をログ出力
-            Log.d("DEBUG", "Current status: ${viewModel.connectionStatus.value}")
-        }
-
-        // デバイスリストの観測
         viewModel.devices.observe(this) { devices ->
-            deviceAdapter.submitList(devices)
-            Log.d("ChippyBLE", "Devices updated: ${devices.size}")
+            deviceAdapter.submitList(devices)  // 正しく参照できる
+            Log.d("DEBUG", "Devices updated: ${devices.size}")
         }
 
-        // メッセージの観測
         viewModel.messages.observe(this) { messages ->
-            messageAdapter.submitList(messages)
-            Log.d("ChippyBLE", "Messages updated: ${messages.size}")
+            messageAdapter.submitList(messages)  // 正しく参照できる
+            Log.d("DEBUG", "Messages updated: ${messages.size}")
         }
 
-        // スキャン状態の観測
+        viewModel.connectionStatus.observe(this) { status ->
+            binding.connectionStatusText.text = "Status: $status"
+            Log.d("DEBUG", "Connection status: $status")
+        }
+
         viewModel.scanningStatus.observe(this) { scanning ->
             binding.scanButton.isEnabled = !scanning
             binding.stopScanButton.isEnabled = scanning
-            Log.d("ChippyBLE", "Scanning: $scanning")
+            Log.d("DEBUG", "Scanning: $scanning")
         }
 
-        // トーストメッセージの観測
         viewModel.toastMessage.observe(this) { message ->
             if (message.isNotEmpty()) {
                 Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
-                // メッセージを表示したらクリア
                 viewModel.clearToastMessage()
             }
         }
@@ -181,6 +177,9 @@ class MainActivity : AppCompatActivity() {
     private fun startBluetoothService() {
         val serviceIntent = Intent(this, BluetoothService::class.java)
         ContextCompat.startForegroundService(this, serviceIntent)
+
+        // サービス開始後にペアリング済みデバイスを読み込み
+        viewModel.loadPairedDevices(bluetoothAdapter)
     }
 
     private fun makeDiscoverable() {
@@ -190,10 +189,33 @@ class MainActivity : AppCompatActivity() {
         startActivity(discoverableIntent)
     }
 
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+    private fun debugBluetoothInfo() {
+        Log.d("DEBUG", "=== Bluetooth Debug Info ===")
+        Log.d("DEBUG", "Bluetooth enabled: ${bluetoothAdapter.isEnabled}")
+
+        val pairedDevices = bluetoothAdapter.bondedDevices
+        Log.d("DEBUG", "Paired devices count: ${pairedDevices.size}")
+
+        pairedDevices.forEachIndexed { index, device ->
+            Log.d("DEBUG", "Device $index: ${device.name} - ${device.address}")
+        }
+
+        Log.d("DEBUG", "Device adapter items: ${deviceAdapter.itemCount}")
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_ENABLE_BT && resultCode == RESULT_OK) {
             startBluetoothService()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // 画面再表示時にデバイスリストを更新
+        if (::bluetoothAdapter.isInitialized && bluetoothAdapter.isEnabled) {
+            viewModel.loadPairedDevices(bluetoothAdapter)
         }
     }
 

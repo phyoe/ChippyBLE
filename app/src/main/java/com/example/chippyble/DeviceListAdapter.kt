@@ -1,18 +1,15 @@
 package com.example.chippyble
 
-import android.bluetooth.BluetoothDevice
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.chippyble.databinding.DeviceListItemBinding
 
 class DeviceListAdapter(
-    private val onDeviceClick: (BluetoothDevice) -> Unit
-) : ListAdapter<BluetoothDevice, DeviceListAdapter.DeviceViewHolder>(DeviceDiffCallback()) {
+    private val onDeviceClick: (DeviceModel) -> Unit
+) : ListAdapter<DeviceModel, DeviceListAdapter.DeviceViewHolder>(DeviceDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DeviceViewHolder {
         val binding = DeviceListItemBinding.inflate(
@@ -29,12 +26,20 @@ class DeviceListAdapter(
 
     class DeviceViewHolder(
         private val binding: DeviceListItemBinding,
-        private val onDeviceClick: (BluetoothDevice) -> Unit
+        private val onDeviceClick: (DeviceModel) -> Unit
     ) : RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(device: BluetoothDevice) {
-            binding.deviceNameText.text = device.name ?: "不明なデバイス"
+        fun bind(device: DeviceModel) {
+            binding.deviceNameText.text = device.name
             binding.deviceAddressText.text = device.address
+
+            // ペアリング状態を表示
+            if (device.isPaired) {
+                binding.pairedStatusText.visibility = android.view.View.VISIBLE
+                binding.pairedStatusText.text = "Paired"
+            } else {
+                binding.pairedStatusText.visibility = android.view.View.GONE
+            }
 
             binding.root.setOnClickListener {
                 onDeviceClick(device)
@@ -42,12 +47,12 @@ class DeviceListAdapter(
         }
     }
 
-    class DeviceDiffCallback : DiffUtil.ItemCallback<BluetoothDevice>() {
-        override fun areItemsTheSame(oldItem: BluetoothDevice, newItem: BluetoothDevice): Boolean {
+    class DeviceDiffCallback : DiffUtil.ItemCallback<DeviceModel>() {
+        override fun areItemsTheSame(oldItem: DeviceModel, newItem: DeviceModel): Boolean {
             return oldItem.address == newItem.address
         }
 
-        override fun areContentsTheSame(oldItem: BluetoothDevice, newItem: BluetoothDevice): Boolean {
+        override fun areContentsTheSame(oldItem: DeviceModel, newItem: DeviceModel): Boolean {
             return oldItem == newItem
         }
     }
