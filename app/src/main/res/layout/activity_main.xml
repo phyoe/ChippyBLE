@@ -19,7 +19,8 @@
             android:layout_height="wrap_content"
             android:text="デバッグテスト"
             android:layout_marginBottom="16dp"
-            android:backgroundTint="@color/teal_700"/>
+            android:backgroundTint="@color/teal_700"
+            android:visibility="gone"/>
 
         <TextView
             android:id="@+id/connectionStatusText"
