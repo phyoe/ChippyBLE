@@ -156,14 +156,31 @@ class MainActivity : AppCompatActivity() {
         }
 
         viewModel.connectionStatus.observe(this) { status ->
-            binding.connectionStatusText.text = "Status: $status"
+            //binding.connectionStatusText.text = "Status: $status"
+            if (status.equals("Disconnected")) { // Added a closing parenthesis here
+                binding.connectionStatusText.text = "ステータス: 切断"
+            } else {
+                binding.connectionStatusText.text = "ステータス： $status"
+            }
             Log.d("DEBUG", "Connection status: $status")
         }
 
         viewModel.scanningStatus.observe(this) { scanning ->
             binding.scanButton.isEnabled = !scanning
             binding.stopScanButton.isEnabled = scanning
+
+            // Add visual feedback to make it obvious
+            if (scanning) {
+                binding.scanButton.alpha = 0.6f
+                binding.stopScanButton.alpha = 1.0f
+            } else {
+                binding.scanButton.alpha = 1.0f
+                binding.stopScanButton.alpha = 0.6f
+            }
+
             Log.d("DEBUG", "Scanning: $scanning")
+            Log.d("DEBUG", "scanButton enabled: ${binding.scanButton.isEnabled}")
+            Log.d("DEBUG", "stopScanButton enabled: ${binding.stopScanButton.isEnabled}")
         }
 
         viewModel.toastMessage.observe(this) { message ->

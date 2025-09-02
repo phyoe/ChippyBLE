@@ -36,7 +36,8 @@ class DeviceListAdapter(
             // ペアリング状態を表示
             if (device.isPaired) {
                 binding.pairedStatusText.visibility = android.view.View.VISIBLE
-                binding.pairedStatusText.text = "Paired"
+                //binding.pairedStatusText.text = "Paired"
+                binding.pairedStatusText.text = "ペアリング済み"
             } else {
                 binding.pairedStatusText.visibility = android.view.View.GONE
             }
