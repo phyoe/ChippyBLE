@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 背景画像（フルスクリーン） -->
+    <item>
+        <bitmap
+            android:src="@drawable/bg_chippy_pattern"
+            android:gravity="fill"
+            android:scaleType="centerCrop"/>
+    </item>
+
+    <!-- オーバーレイ（内容が見やすいように） -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:startColor="#80000000"
+                android:endColor="#40000000"
+                android:angle="90"/>
+        </shape>
+    </item>
+
+    <!-- ブランドング効果 -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#10FFFCED"/>
+        </shape>
+    </item>
+
+</layer-list>
